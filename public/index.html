@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航管理后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 30px;
+        }
+
+        .nav-item {
+            padding: 12px;
+            margin: 5px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: #34495e;
+        }
+
+        .main {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: opacity 0.3s;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .icon-preview {
+            width: 50px;
+            height: 50px;
+            margin-top: 10px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>🧭 管理后台</h2>
+            <div class="nav-item active" onclick="showSection('dashboard')">📊 仪表盘</div>
+            <div class="nav-item" onclick="showSection('links')">🔗 链接管理</div>
+            <div class="nav-item" onclick="showSection('categories')">📁 分类管理</div>
+            <div class="nav-item" onclick="showSection('settings')">⚙️ 系统设置</div>
+        </div>
+
+        <div class="main">
+            <!-- 仪表盘 -->
+            <div id="dashboard-section" class="section">
+                <div class="header">
+                    <h1>仪表盘</h1>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>总链接数</h3>
+                        <div class="value" id="total-links">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>总点击数</h3>
+                        <div class="value" id="total-clicks">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>分类数</h3>
+                        <div class="value" id="total-categories">0</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>热门链接 TOP 5</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>标题</th>
+                                <th>点击数</th>
+                                <th>分类</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-links"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 链接管理 -->
+            <div id="links-section" class="section" style="display:none">
+                <div class="header">
+                    <h1>链接管理</h1>
+                    <button class="btn btn-primary" onclick="openModal()">➕ 添加链接</button>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>图标</th>
+                                <th>标题</th>
+                                <th>URL</th>
+                                <th>分类</th>
+                                <th>点击数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="links-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 分类管理 -->
+            <div id="categories-section" class="section" style="display:none">
+                <div class="header">
+                    <h1>分类管理</h1>
+                    <button class="btn btn-primary" onclick="openCategoryModal()">➕ 添加分类</button>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>图标</th>
+                                <th>名称</th>
+                                <th>排序</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categories-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 设置 -->
+            <div id="settings-section" class="section" style="display:none">
+                <div class="header">
+                    <h1>系统设置</h1>
+                </div>
+                <div class="card">
+                    <div class="form-group">
+                        <label>网站标题</label>
+                        <input type="text" id="site-title" placeholder="我的导航站">
+                    </div>
+                    <div class="form-group">
+                        <label>网站描述</label>
+                        <textarea id="site-description" rows="3" placeholder="一个简洁的个人导航网站"></textarea>
+                    </div>
+                    <button class="btn btn-success" onclick="saveSettings()">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加链接模态框 -->
+    <div id="link-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">添加链接</h2>
+            <form id="link-form">
+                <input type="hidden" id="link-id">
+                <div class="form-group">
+                    <label>标题 *</label>
+                    <input type="text" id="link-title" required>
+                </div>
+                <div class="form-group">
+                    <label>URL *</label>
+                    <input type="url" id="link-url" required>
+                </div>
+                <div class="form-group">
+                    <label>分类</label>
+                    <select id="link-category"></select>
+                </div>
+                <div class="form-group">
+                    <label>图标</label>
+                    <input type="file" id="link-icon" accept="image/*" onchange="previewIcon(this)">
+                    <img id="icon-preview" class="icon-preview" style="display:none">
+                </div>
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea id="link-description" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">保存</button>
+                <button type="button" class="btn btn-danger" onclick="closeModal()">取消</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 添加分类模态框 -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content">
+            <h2>添加分类</h2>
+            <form id="category-form">
+                <div class="form-group">
+                    <label>名称 *</label>
+                    <input type="text" id="category-name" required>
+                </div>
+                <div class="form-group">
+                    <label>图标 (Emoji)</label>
+                    <input type="text" id="category-icon" placeholder="🔧">
+                </div>
+                <div class="form-group">
+                    <label>排序</label>
+                    <input type="number" id="category-sort" value="0">
+                </div>
+                <button type="submit" class="btn btn-success">保存</button>
+                <button type="button" class="btn btn-danger" onclick="closeCategoryModal()">取消</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+
+        // 加载统计数据
+        async function loadStats() {
+            const res = await fetch(`${API}/stats`);
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('total-links').textContent = data.data.totalLinks;
+                document.getElementById('total-clicks').textContent = data.data.totalClicks;
+                document.getElementById('total-categories').textContent = data.data.totalCategories;
+
+                const tbody = document.getElementById('top-links');
+                tbody.innerHTML = data.data.topLinks.map(link => `
+                    <tr>
+                        <td>${link.title}</td>
+                        <td>${link.clicks}</td>
+                        <td>${link.category || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // 加载链接
+        async function loadLinks() {
+            const res = await fetch(`${API}/links`);
+            const data = await res.json();
+            if (data.success) {
+                const tbody = document.getElementById('links-table');
+                tbody.innerHTML = data.data.map(link => `
+                    <tr>
+                        <td>${link.icon ? `<img src="${link.icon}" width="32">` : '-'}</td>
+                        <td>${link.title}</td>
+                        <td><a href="${link.url}" target="_blank">${link.url.substring(0, 30)}...</a></td>
+                        <td>${link.category || '-'}</td>
+                        <td>${link.clicks}</td>
+                        <td class="actions">
+                            <button class="btn btn-primary" onclick="editLink('${link.id}')">编辑</button>
+                            <button class="btn btn-danger" onclick="deleteLink('${link.id}')">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // 加载分类
+        async function loadCategories() {
+            const res = await fetch(`${API}/categories`);
+            const data = await res.json();
+            if (data.success) {
+                const tbody = document.getElementById('categories-table');
+                tbody.innerHTML = data.data.map(cat => `
+                    <tr>
+                        <td>${cat.icon || '-'}</td>
+                        <td>${cat.name}</td>
+                        <td>${cat.sort_order}</td>
+                        <td class="actions">
+                            <button class="btn btn-danger" onclick="deleteCategory('${cat.id}')">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // 更新链接表单的分类选择
+                const select = document.getElementById('link-category');
+                select.innerHTML = '<option value="">无分类</option>' +
+                    data.data.map(cat => `<option value="${cat.name}">${cat.icon || ''} ${cat.name}</option>`).join('');
+            }
+        }
+
+        // 显示部分
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+            document.getElementById(`${section}-section`).style.display = 'block';
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (section === 'dashboard') loadStats();
+            if (section === 'links') loadLinks();
+            if (section === 'categories') loadCategories();
+        }
+
+        // 模态框控制
+        function openModal() {
+            document.getElementById('link-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('link-modal').classList.remove('active');
+            document.getElementById('link-form').reset();
+            document.getElementById('icon-preview').style.display = 'none';
+        }
+
+        function openCategoryModal() {
+            document.getElementById('category-modal').classList.add('active');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.remove('active');
+            document.getElementById('category-form').reset();
+        }
+
+        // 预览图标
+        function previewIcon(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('icon-preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // 提交链接表单
+        document.getElementById('link-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const id = document.getElementById('link-id').value;
+
+            const url = id ? `${API}/links/${id}` : `${API}/links`;
+            const method = id ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                body: formData
+            });
+
+            if (res.ok) {
+                closeModal();
+                loadLinks();
+                alert('保存成功！');
+            }
+        });
+
+        // 编辑链接
+        async function editLink(id) {
+            const res = await fetch(`${API}/links`);
+            const data = await res.json();
+            const link = data.data.find(l => l.id === id);
+
+            if (link) {
+                document.getElementById('link-id').value = link.id;
+                document.getElementById('link-title').value = link.title;
+                document.getElementById('link-url').value = link.url;
+                document.getElementById('link-category').value = link.category || '';
+                document.getElementById('link-description').value = link.description || '';
+
+                if (link.icon) {
+                    const preview = document.getElementById('icon-preview');
+                    preview.src = link.icon;
+                    preview.style.display = 'block';
+                }
+
+                document.getElementById('modal-title').textContent = '编辑链接';
+                openModal();
+            }
+        }
+
+        // 删除链接
+        async function deleteLink(id) {
+            if (confirm('确定删除此链接吗？')) {
+                await fetch(`${API}/links/${id}`, { method: 'DELETE' });
+                loadLinks();
+            }
+        }
+
+        // 删除分类
+        async function deleteCategory(id) {
+            if (confirm('确定删除此分类吗？')) {
+                await fetch(`${API}/categories/${id}`, { method: 'DELETE' });
+                loadCategories();
+            }
+        }
+
+        // 提交分类表单
+        document.getElementById('category-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            const res = await fetch(`${API}/categories`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                closeCategoryModal();
+                loadCategories();
+                alert('保存成功！');
+            }
+        });
+
+        // 初始化
+        loadStats();
+    </script>
+</body>
+</html>
