@@ -1,7 +1,7 @@
 {
   "name": "my-nav-admin",
   "version": "1.0.0",
-  "description": "导航网站管理后台 - 支持数据库和文件上传",
+  "description": "Navigation website admin panel with database and file upload",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
